@@ -1,13 +1,36 @@
 import axios from 'axios';
-import Cookies from 'js-cookie';
 
 let apiUrl = import.meta.env.VITE_URL;
 
+// Set up an axios instance
+const apiClient = axios.create({
+  baseURL: apiUrl,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add a request interceptor to include the token in the headers
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Login
 export const loginApi = async (data) => {
   try {
-    const response = await axios.post(`${apiUrl}/account/login`, data, { withCredentials: true });
-    console.log(response.data);
-    return response.data;
+    const response = await apiClient.post('/account/login', data);
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
+    return user;
   } catch (error) {
     if (error.response) {
       throw new Error(error.response.data.message || 'Login failed');
@@ -15,81 +38,76 @@ export const loginApi = async (data) => {
       throw new Error('Network or server error');
     }
   }
-}
+};
+
+// Signup
 export const signupApi = async (formData) => {
   try {
-    const response = await axios.post(`${apiUrl}/account/signup`, formData, {
+    const response = await apiClient.post('/account/signup', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      withCredentials: true,
     });
-    return response.data;
+    const { token, user } = response.data;
+    localStorage.setItem('token', token);
+    return user;
   } catch (error) {
     if (error.response) {
-      // Return detailed error message from server response
       throw new Error(error.response.data.message || 'Signup failed');
     } else {
-      // Handle other types of errors
       throw new Error('Network or server error');
     }
   }
 };
 
-
-// To fetch user details
+// Fetch user details
 export const getuserApi = async () => {
   try {
-    const response = await axios.get(`${apiUrl}/account/user`, { withCredentials: true });
+    const response = await apiClient.get('/account/user');
     return response.data;
   } catch (error) {
     console.error('Error fetching user:', error);
     throw error;
   }
-}
+};
 
-// To update user details
+// Update user details
 export const updateUserApi = async (formData) => {
   try {
-    const response = await axios.put(`${apiUrl}/account/edit`, formData, {
+    const response = await apiClient.put('/account/edit', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      withCredentials: true,
     });
     return response.data.user;
   } catch (error) {
     console.error('Error updating user:', error);
     throw error;
   }
-}
+};
 
-
-// Function to add a post
+// Add a post
 export const addPostApi = async (formData) => {
   try {
-    const response = await axios.post(`${apiUrl}/post/create`, formData, {
+    const response = await apiClient.post('/post/create', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      withCredentials: true,
     });
     return response.data;
   } catch (error) {
     if (error.response) {
-      // Return detailed error message from server response
       throw new Error(error.response.data.message || 'Failed to add post');
     } else {
-      // Handle other types of errors
       throw new Error('Network or server error');
     }
   }
 };
 
-// to get all post
+// Fetch all posts
 export const getPosts = async () => {
   try {
-    const response = await axios.get(`${apiUrl}/post`, { withCredentials: true });
+    const response = await apiClient.get('/post');
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -98,12 +116,12 @@ export const getPosts = async () => {
       throw new Error('Network or server error');
     }
   }
-}
+};
 
-// to get user posts 
+// Fetch user posts
 export const getUserPosts = async () => {
   try {
-    const response = await axios.get(`${apiUrl}/account/posts`, { withCredentials: true });
+    const response = await apiClient.get('/account/posts');
     return response.data; // Assuming response.data is { posts: [] }
   } catch (error) {
     if (error.response) {
@@ -114,10 +132,10 @@ export const getUserPosts = async () => {
   }
 };
 
-// To delete a post
+// Delete a post
 export const deletePostApi = async (postId) => {
   try {
-    const response = await axios.delete(`${apiUrl}/post/${postId}`, { withCredentials: true });
+    const response = await apiClient.delete(`/post/${postId}`);
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -128,14 +146,13 @@ export const deletePostApi = async (postId) => {
   }
 };
 
-// To update a post
+// Update a post
 export const updatePostApi = async (postId, formData) => {
   try {
-    const response = await axios.put(`${apiUrl}/post/${postId}`, formData, {
+    const response = await apiClient.put(`/post/${postId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      withCredentials: true,
     });
     return response.data.post;
   } catch (error) {
@@ -144,14 +161,14 @@ export const updatePostApi = async (postId, formData) => {
   }
 };
 
-// To fetch a single post by ID
+// Fetch a single post by ID
 export const getPostByIdApi = async (postId) => {
   try {
     if (!postId) {
       throw new Error('Post ID is required');
     }
     console.log('Making API call to fetch post by ID:', postId); // Log the API call
-    const response = await axios.get(`${apiUrl}/post/${postId}`, { withCredentials: true });
+    const response = await apiClient.get(`/post/${postId}`);
     return response.data;
   } catch (error) {
     console.error('Error in getPostByIdApi:', error); // Log the error
@@ -163,11 +180,11 @@ export const getPostByIdApi = async (postId) => {
   }
 };
 
-// to fetch all users 
+// Fetch all users
 export const getUsersApi = async () => {
   try {
-    const users = await axios.get(`${apiUrl}/account/users`, { withCredentials: true })
-    return users.data
+    const users = await apiClient.get('/account/users');
+    return users.data;
   } catch (error) {
     console.error('Error in getting all users:', error); 
     if (error.response) {
@@ -176,13 +193,13 @@ export const getUsersApi = async () => {
       throw new Error('Network or server error');
     }
   }
-}
+};
 
-// to fetch user profile detail
+// Fetch user profile detail
 export const getUserDetailApi = async (id) => {
   try {
-    const user = await axios.get(`${apiUrl}/account/${id}`, { withCredentials: true})
-    return user.data
+    const user = await apiClient.get(`/account/${id}`);
+    return user.data;
   } catch (error) {
     console.error('Error in getting user detail:', error); 
     if (error.response) {
@@ -191,12 +208,12 @@ export const getUserDetailApi = async (id) => {
       throw new Error('Network or server error');
     }
   }
-}
+};
 
-// to get old chats
-export const getChatHistoryApi = async ( userId2) => {
+// Fetch old chats
+export const getChatHistoryApi = async (userId2) => {
   try {
-    const response = await axios.get(`${apiUrl}/chat/${userId2}`, { withCredentials: true });
+    const response = await apiClient.get(`/chat/${userId2}`);
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -207,10 +224,10 @@ export const getChatHistoryApi = async ( userId2) => {
   }
 };
 
-// to post message
+// Post a message
 export const postMessageApi = async (data) => {
   try {
-    const response = await axios.post(`${apiUrl}/chat`, data, { withCredentials: true });
+    const response = await apiClient.post('/chat', data);
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -221,10 +238,10 @@ export const postMessageApi = async (data) => {
   }
 };
 
-// to get chatted users
+// Fetch chatted users
 export const getChattedUsersApi = async (userId) => {
   try {
-    const response = await axios.get(`${apiUrl}/chat/chattedUsers/${userId}`, { withCredentials: true });
+    const response = await apiClient.get(`/chat/chattedUsers/${userId}`);
     return response.data;
   } catch (error) {
     if (error.response) {
@@ -235,9 +252,9 @@ export const getChattedUsersApi = async (userId) => {
   }
 };
 
-
-export const getUserIdFromToken = async () => {
-  const token = Cookies.get('token');
+// Get user ID from token
+export const getUserIdFromToken = () => {
+  const token = localStorage.getItem('token');
 
   console.log('Token:', token); // Log the token
 
@@ -254,42 +271,44 @@ export const getUserIdFromToken = async () => {
   }
 };
 
+// Like a post
 export const likePost = async (postId) => {
-  const response = await axios.post(`${apiUrl}/post/${postId}/like`, {}, { withCredentials: true });
-  return response.data;
-};
-
-export const unlikePost = async (postId) => {
-  const response = await axios.post(`${apiUrl}/post/${postId}/unlike`, {}, { withCredentials: true });
-  return response.data;
-};
-
-export const fetchChatHistory = async (userId1, userId2) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/chat/${userId2}`, {
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-    const chatHistory = await response.json();
-    return chatHistory;
+    const response = await apiClient.post(`/post/${postId}/like`);
+    return response.data;
+  } catch (error) {
+    console.error('Error liking post:', error);
+    throw error;
+  }
+};
+
+// Unlike a post
+export const unlikePost = async (postId) => {
+  try {
+    const response = await apiClient.post(`/post/${postId}/unlike`);
+    return response.data;
+  } catch (error) {
+    console.error('Error unliking post:', error);
+    throw error;
+  }
+};
+
+// Fetch chat history
+export const fetchChatHistory = async (userId2) => {
+  try {
+    const response = await apiClient.get(`/chat/${userId2}`);
+    return response.data;
   } catch (error) {
     console.error('Error fetching chat history:', error);
     throw error;
   }
 };
 
+// Fetch user detail
 export const fetchUserDetail = async (userId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
-      credentials: 'include',
-    });
-    if (!response.ok) {
-      throw new Error(`Error: ${response.statusText}`);
-    }
-    const userDetail = await response.json();
-    return userDetail;
+    const response = await apiClient.get(`/user/${userId}`);
+    return response.data;
   } catch (error) {
     console.error('Error fetching user detail:', error);
     throw error;

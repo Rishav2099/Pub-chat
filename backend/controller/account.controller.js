@@ -1,5 +1,4 @@
 const User = require('../models/user');
-const Post = require('../models/post');
 const { hashPassword, passwordCompare } = require('../utils/hashPassword');
 const uploadOnCloudinary = require('../utils/cloudinary');
 const { generateToken } = require('../utils/jwt');
@@ -41,12 +40,7 @@ exports.signup = async (req, res) => {
 
     const token = generateToken(newUser);
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'Lax',
-    });
-
-    res.status(201).json({ message: 'User created successfully', user: newUser });
+    res.status(201).json({ message: 'User created successfully', user: newUser, token });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
@@ -69,12 +63,7 @@ exports.login = async (req, res) => {
 
     const token = generateToken(user);
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'Lax',
-    });
-
-    res.status(200).json({ message: 'Login successful', user });
+    res.status(200).json({ message: 'Login successful', user, token });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
@@ -169,7 +158,7 @@ exports.getAllUsers = async (req, res) => {
     const users = await User.find();
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status500.json({ message: 'Server error', error });
   }
 };
 
