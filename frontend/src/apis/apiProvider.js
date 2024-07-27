@@ -253,7 +253,7 @@ export const getChattedUsersApi = async (userId) => {
 };
 
 // Get user ID from token
-export const getUserIdFromToken = () => {
+export const getUserIdFromToken = async() => {
   const token = localStorage.getItem('token');
 
   console.log('Token:', token); // Log the token
