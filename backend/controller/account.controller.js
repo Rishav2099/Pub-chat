@@ -5,10 +5,13 @@ const { generateToken, verifyToken } = require('../utils/jwt');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
 const setTokenCookie = (res, token) => {
-  
-  res.cookie('token', token); // Set the cookie
+  const options = {
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined
+  };
+  res.cookie('token', token, options);
 };
-
 
 // Signup
 exports.signup = async (req, res) => {
@@ -59,21 +62,29 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    console.log(`Login attempt with email: ${email}`);
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Sign up first' });
+    if (!user) {
+      console.log('User not found');
+      return res.status(400).json({ message: 'Sign up first' });
+    }
 
     const isMatch = await passwordCompare(password, user.password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!isMatch) {
+      console.log('Invalid credentials');
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
 
     const token = generateToken(user);
-    setTokenCookie(res, token); // Set the token in a cookie
-
-    res.status(200).json({ message: 'Login successful', token, user });
+   console.log(token);
+   setTokenCookie(res, token);
+    res.status(200).cookie('token', token).json({ message: 'Login successful', token, user });
   } catch (error) {
+    console.error('Server error:', error);
     res.status(500).json({ message: 'Server error', error });
   }
 };
-
 
 // Get User
 exports.getUser = async (req, res) => {
