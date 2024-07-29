@@ -8,7 +8,7 @@ const setTokenCookie = (res, token) => {
   const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // set to true if in production
-    sameSite: 'strict',
+    sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'strict',
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   };
   res.cookie('token', token, options);
