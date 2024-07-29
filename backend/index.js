@@ -20,10 +20,13 @@ const port = 3000;
 connectDB();
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
-}));
+const corsOptions = {
+  origin: process.env.FRONTEND_URL, // Ensure this is set to your frontend URL
+  credentials: true, // Allow credentials (cookies)
+};
+
+app.use(cors(corsOptions));
+
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

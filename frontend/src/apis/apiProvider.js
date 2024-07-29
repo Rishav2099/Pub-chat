@@ -8,6 +8,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
 
 // Add a request interceptor to include the token in the headers
@@ -24,13 +25,13 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Login
+// Login function
 export const loginApi = async (data) => {
   try {
     const response = await apiClient.post('/account/login', data);
     const { token, user } = response.data;
     localStorage.setItem('token', token);
-    return user;
+    return { token, user };
   } catch (error) {
     if (error.response) {
       throw new Error(error.response.data.message || 'Login failed');
@@ -39,6 +40,7 @@ export const loginApi = async (data) => {
     }
   }
 };
+
 
 // Signup
 export const signupApi = async (formData) => {

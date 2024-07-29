@@ -14,19 +14,19 @@ const Login = () => {
   const navigate = useNavigate();
   const { setUser } = useContext(UserContext);
 
+  // Login component
   const onSubmit = async (data) => {
     setLoading(true);
     setError(null);
 
     try {
-      const res = await loginApi(data);
+      const { token, user } = await loginApi(data);
 
-      if (res && res.user) {
-        // Set user in context
-        setUser(res.user);
+      if (token && user) {
+        setUser(user);
         navigate('/');
       } else {
-        setError(res?.message || 'Login failed');
+        setError('Login failed');
       }
     } catch (error) {
       setError(error.message || 'An error occurred');

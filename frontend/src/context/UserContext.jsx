@@ -1,4 +1,6 @@
+// context/UserContext.jsx
 import React, { createContext, useState, useEffect } from 'react';
+import { getuserApi } from '../apis/apiProvider';
 
 export const UserContext = createContext();
 
@@ -6,19 +8,20 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const fetchUser = async () => {
+      try {
+        const userData = await getuserApi();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
+    };
+
+    fetchUser();
   }, []);
 
-  const setUserAndStore = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
-
   return (
-    <UserContext.Provider value={{ user, setUser: setUserAndStore }}>
+    <UserContext.Provider value={{ user, setUser }}>
       {children}
     </UserContext.Provider>
   );

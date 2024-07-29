@@ -1,8 +1,18 @@
 const User = require('../models/user');
 const { hashPassword, passwordCompare } = require('../utils/hashPassword');
 const uploadOnCloudinary = require('../utils/cloudinary');
-const { generateToken } = require('../utils/jwt');
+const { generateToken, verifyToken } = require('../utils/jwt');
 const { authenticateToken } = require('../middleware/authMiddleware');
+
+const setTokenCookie = (res, token) => {
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // set to true if in production
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  };
+  res.cookie('token', token, options);
+};
 
 // Signup
 exports.signup = async (req, res) => {
@@ -40,7 +50,9 @@ exports.signup = async (req, res) => {
 
     const token = generateToken(newUser);
 
-    res.status(201).json({ message: 'User created successfully', user: newUser, token });
+    setTokenCookie(res, token);
+
+    res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
@@ -51,40 +63,54 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    console.log(`Login attempt with email: ${email}`);
+
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('User not found');
       return res.status(400).json({ message: 'Sign up first' });
     }
 
     const isMatch = await passwordCompare(password, user.password);
     if (!isMatch) {
+      console.log('Invalid credentials');
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     const token = generateToken(user);
-
-    res.status(200).json({ message: 'Login successful', user, token });
+    console.log('Login successful');
+    res.status(200).cookie('token', token).json({ message: 'Login successful', token, user });
   } catch (error) {
+    console.error('Server error:', error);
     res.status(500).json({ message: 'Server error', error });
   }
 };
 
 // Get User
-exports.getUser = [
-  authenticateToken,
-  async (req, res) => {
-    try {
-      const user = await User.findById(req.user._id);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
+exports.getUser = async (req, res) => {
+  try {
+    const token = req.cookies.token; // Correct way to access the token from cookies
 
-      res.status(200).json(user);
-    } catch (error) {
-      res.status(500).json({ message: 'Server error', error });
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
     }
+
+    const userToken = verifyToken(token); // Verify the token using your utility function
+
+    if (!userToken) {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const user = await User.findById(userToken.id); // Assuming the token contains the user's ID
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
-];
+};
 
 // Edit User
 exports.editUser = [
@@ -158,7 +184,7 @@ exports.getAllUsers = async (req, res) => {
     const users = await User.find();
     res.status(200).json(users);
   } catch (error) {
-    res.status500.json({ message: 'Server error', error });
+    res.status(500).json({ message: 'Server error', error });
   }
 };
 
