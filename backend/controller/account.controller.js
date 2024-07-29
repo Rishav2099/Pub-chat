@@ -7,12 +7,13 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 const setTokenCookie = (res, token) => {
   const options = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // set to true if in production
-    sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'strict',
+    secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
+    sameSite: 'lax', // Use 'lax' or 'strict' based on your needs
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   };
-  res.cookie('token', token, options);
+  res.cookie('token', token, options); // Set the cookie
 };
+
 
 // Signup
 exports.signup = async (req, res) => {
@@ -63,29 +64,21 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    console.log(`Login attempt with email: ${email}`);
-
     const user = await User.findOne({ email });
-    if (!user) {
-      console.log('User not found');
-      return res.status(400).json({ message: 'Sign up first' });
-    }
+    if (!user) return res.status(400).json({ message: 'Sign up first' });
 
     const isMatch = await passwordCompare(password, user.password);
-    if (!isMatch) {
-      console.log('Invalid credentials');
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
     const token = generateToken(user);
-   console.log(token);
-   setTokenCookie(res, token);
-    res.status(200).cookie('token', token).json({ message: 'Login successful', token, user });
+    setTokenCookie(res, token); // Set the token in a cookie
+
+    res.status(200).json({ message: 'Login successful', token, user });
   } catch (error) {
-    console.error('Server error:', error);
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
 
 // Get User
 exports.getUser = async (req, res) => {
