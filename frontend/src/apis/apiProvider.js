@@ -5,9 +5,6 @@ const apiUrl = import.meta.env.VITE_URL;
 // Set up an axios instance
 const apiClient = axios.create({
   baseURL: apiUrl,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   withCredentials: true,
 });
 
