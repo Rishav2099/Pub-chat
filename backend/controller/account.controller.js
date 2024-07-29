@@ -6,7 +6,6 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 
 const setTokenCookie = (res, token) => {
   const options = {
-    httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
     sameSite: 'lax', // Use 'lax' or 'strict' based on your needs
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
