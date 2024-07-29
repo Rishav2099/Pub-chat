@@ -79,7 +79,7 @@ exports.login = async (req, res) => {
 
     const token = generateToken(user);
    console.log(token);
-    console.log('Login successful');
+   setTokenCookie(res, token);
     res.status(200).cookie('token', token).json({ message: 'Login successful', token, user });
   } catch (error) {
     console.error('Server error:', error);
