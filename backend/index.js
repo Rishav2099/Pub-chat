@@ -14,7 +14,7 @@ const app = express();
 const http = require('http');
 const { Server } = require('socket.io');
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Connect to the database
 connectDB();
@@ -37,6 +37,14 @@ app.use('/post', post);
 app.use('/chat', chatRoutes);
 
 app.get('/account/user', getUser);
+
+// Middleware to handle HTTPS redirects in production
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === 'production' && req.headers['x-forwarded-proto'] !== 'https') {
+    return res.redirect(`https://${req.headers.host}${req.url}`);
+  }
+  next();
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {

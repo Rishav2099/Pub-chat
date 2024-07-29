@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-let apiUrl = import.meta.env.VITE_URL;
+const apiUrl = import.meta.env.VITE_URL;
 
 // Set up an axios instance
 const apiClient = axios.create({
@@ -20,10 +20,17 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
+
+// Utility function for handling API errors
+const handleApiError = (error) => {
+  if (error.response) {
+    throw new Error(error.response.data.message || 'API request failed');
+  } else {
+    throw new Error('Network or server error');
+  }
+};
 
 // Login function
 export const loginApi = async (data) => {
@@ -33,16 +40,11 @@ export const loginApi = async (data) => {
     localStorage.setItem('token', token);
     return { token, user };
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Login failed');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
-
-// Signup
+// Signup function
 export const signupApi = async (formData) => {
   try {
     const response = await apiClient.post('/account/signup', formData, {
@@ -54,11 +56,7 @@ export const signupApi = async (formData) => {
     localStorage.setItem('token', token);
     return user;
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Signup failed');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
@@ -68,8 +66,7 @@ export const getuserApi = async () => {
     const response = await apiClient.get('/account/user');
     return response.data;
   } catch (error) {
-    console.error('Error fetching user:', error);
-    throw error;
+    handleApiError(error);
   }
 };
 
@@ -83,8 +80,7 @@ export const updateUserApi = async (formData) => {
     });
     return response.data.user;
   } catch (error) {
-    console.error('Error updating user:', error);
-    throw error;
+    handleApiError(error);
   }
 };
 
@@ -98,11 +94,7 @@ export const addPostApi = async (formData) => {
     });
     return response.data;
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to add post');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
@@ -112,11 +104,7 @@ export const getPosts = async () => {
     const response = await apiClient.get('/post');
     return response.data;
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to fetch posts');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
@@ -126,11 +114,7 @@ export const getUserPosts = async () => {
     const response = await apiClient.get('/account/posts');
     return response.data; // Assuming response.data is { posts: [] }
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to fetch posts');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
@@ -140,11 +124,7 @@ export const deletePostApi = async (postId) => {
     const response = await apiClient.delete(`/post/${postId}`);
     return response.data;
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to delete post');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
@@ -158,57 +138,42 @@ export const updatePostApi = async (postId, formData) => {
     });
     return response.data.post;
   } catch (error) {
-    console.error('Error updating post:', error);
-    throw error;
+    handleApiError(error);
   }
 };
 
 // Fetch a single post by ID
 export const getPostByIdApi = async (postId) => {
   try {
-    if (!postId) {
-      throw new Error('Post ID is required');
-    }
+    if (!postId) throw new Error('Post ID is required');
     console.log('Making API call to fetch post by ID:', postId); // Log the API call
     const response = await apiClient.get(`/post/${postId}`);
     return response.data;
   } catch (error) {
     console.error('Error in getPostByIdApi:', error); // Log the error
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to fetch post');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
 // Fetch all users
 export const getUsersApi = async () => {
   try {
-    const users = await apiClient.get('/account/users');
-    return users.data;
+    const response = await apiClient.get('/account/users');
+    return response.data;
   } catch (error) {
-    console.error('Error in getting all users:', error); 
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to fetch all users');
-    } else {
-      throw new Error('Network or server error');
-    }
+    console.error('Error in getting all users:', error);
+    handleApiError(error);
   }
 };
 
 // Fetch user profile detail
 export const getUserDetailApi = async (id) => {
   try {
-    const user = await apiClient.get(`/account/${id}`);
-    return user.data;
+    const response = await apiClient.get(`/account/${id}`);
+    return response.data;
   } catch (error) {
-    console.error('Error in getting user detail:', error); 
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to fetch user detail');
-    } else {
-      throw new Error('Network or server error');
-    }
+    console.error('Error in getting user detail:', error);
+    handleApiError(error);
   }
 };
 
@@ -218,11 +183,7 @@ export const getChatHistoryApi = async (userId2) => {
     const response = await apiClient.get(`/chat/${userId2}`);
     return response.data;
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to fetch chat history');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
@@ -232,11 +193,7 @@ export const postMessageApi = async (data) => {
     const response = await apiClient.post('/chat', data);
     return response.data;
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to send message');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
@@ -246,16 +203,12 @@ export const getChattedUsersApi = async (userId) => {
     const response = await apiClient.get(`/chat/chattedUsers/${userId}`);
     return response.data;
   } catch (error) {
-    if (error.response) {
-      throw new Error(error.response.data.message || 'Failed to fetch chatted users');
-    } else {
-      throw new Error('Network or server error');
-    }
+    handleApiError(error);
   }
 };
 
 // Get user ID from token
-export const getUserIdFromToken = async() => {
+export const getUserIdFromToken = async () => {
   const token = localStorage.getItem('token');
 
   console.log('Token:', token); // Log the token
@@ -280,7 +233,7 @@ export const likePost = async (postId) => {
     return response.data;
   } catch (error) {
     console.error('Error liking post:', error);
-    throw error;
+    handleApiError(error);
   }
 };
 
@@ -291,18 +244,7 @@ export const unlikePost = async (postId) => {
     return response.data;
   } catch (error) {
     console.error('Error unliking post:', error);
-    throw error;
-  }
-};
-
-// Fetch chat history
-export const fetchChatHistory = async (userId2) => {
-  try {
-    const response = await apiClient.get(`/chat/${userId2}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching chat history:', error);
-    throw error;
+    handleApiError(error);
   }
 };
 
@@ -313,6 +255,6 @@ export const fetchUserDetail = async (userId) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching user detail:', error);
-    throw error;
+    handleApiError(error);
   }
 };
