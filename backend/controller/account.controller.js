@@ -5,12 +5,8 @@ const { generateToken, verifyToken } = require('../utils/jwt');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
 const setTokenCookie = (res, token) => {
-  const options = {
-    secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
-    sameSite: 'lax', // Use 'lax' or 'strict' based on your needs
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  };
-  res.cookie('token', token, options); // Set the cookie
+  
+  res.cookie('token', token); // Set the cookie
 };
 
 
